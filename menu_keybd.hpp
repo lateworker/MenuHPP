@@ -1,11 +1,23 @@
 #ifndef MenuKbdHPP
 #define MenuKbdHPP
 
-//#include <string>
-//#include <vector>
-//#include <tuple>
 #include <bits/stdc++.h>
 #include <windows.h>
+
+COORD operator + (const COORD& a, const COORD& b) { return {(SHORT)(a.X + b.X), (SHORT)(a.Y + b.Y)}; }
+COORD operator - (const COORD& a, const COORD& b) { return {(SHORT)(a.X - b.X), (SHORT)(a.Y - b.Y)}; }
+COORD operator * (const COORD& a, const SHORT& b) { return {(SHORT)(a.X * b), (SHORT)(a.Y * b)}; }
+COORD operator / (const COORD& a, const SHORT& b) { return {(SHORT)(a.X / b), (SHORT)(a.Y / b)}; }
+COORD operator % (const COORD& a, const SHORT& b) { return {(SHORT)(a.X % b), (SHORT)(a.Y % b)}; }
+void operator += (COORD& a, const COORD& b) { a = a + b; }
+void operator -= (COORD& a, const COORD& b) { a = a - b; }
+void operator *= (COORD& a, const SHORT& b) { a = a * b; }
+void operator /= (COORD& a, const SHORT& b) { a = a / b; }
+void operator %= (COORD& a, const SHORT& b) { a = a % b; }
+std::strong_ordering operator <=> (const COORD& a, const COORD& b) { return std::make_pair(a.X, a.Y) <=> std::make_pair(b.X, b.Y); }
+bool operator == (const COORD &a, const COORD &b) { return std::make_pair(a.X, a.Y) == std::make_pair(b.X, b.Y); }
+std::istream &operator >> (std::istream &pin, COORD &x) { pin >> x.X >> x.Y; return pin; }
+std::ostream &operator << (std::ostream &pout, const COORD x) { pout << x.X << ' ' << x.Y; return pout; }
 
 namespace MenuKbd {
 
@@ -36,6 +48,8 @@ namespace MenuKbd {
 		WORD getForegroundColor() const;
 		WORD getBackgroundColor() const;
 		WORD getMixedColor() const;
+		
+		bool operator == (const ConsoleColor& b) const;
 	};
 
 	using display_t = std::tuple<std::string, ConsoleColor>;
@@ -88,21 +102,19 @@ namespace MenuKbd {
 		void set(COORD position, const display_t& data);
 		display_t get(COORD position) const;
 	};
-
-	Text::Text() {
-		name.clear(), text.clear();
-		LenX = LenY = 0;
-	}
-	Text::~Text() {
-		name.clear(), text.clear();
-		LenX = LenY = 0;
-	}
 	
-	Display::Display() {
-		buffer.clear();
+	
+	ConsoleColor::ConsoleColor() {
+		color = CONSOLE_WHITE;
+	} 
+	ConsoleColor::~ConsoleColor() {
+		color = 0;
 	}
-	Display::~Display() {
-		buffer.clear();
+	WORD ConsoleColor::getMixedColor() const {
+		return color;
+	}
+	bool ConsoleColor::operator == (const ConsoleColor& b) const {
+		return color == b.color;
 	}
 	
 	bool Basic::getCursorPosition(COORD &cursorPosition) {
@@ -121,25 +133,43 @@ namespace MenuKbd {
 		return SetConsoleTextAttribute(hConsole, color.getMixedColor());
 	}
 	bool Basic::printText(COORD position, const display_t& data) {
+		bool ret = false;
 		const auto& [text, color] = data;
 		COORD position_now;
-		getCursorPosition(position_now);
-		setCursorPosition(position);
+		ret |= getCursorPosition(position_now);
+		ret |= setCursorPosition(position);
 		std::cout << text;
-		setCursorPosition(position_now);
+		ret |= setCursorPosition(position_now);
+		return ret;
 	}
 	
+	Text::Text() {
+		name.clear(), text.clear();
+		LenX = LenY = 0;
+	}
+	Text::~Text() {
+		name.clear(), text.clear();
+		LenX = LenY = 0;
+	}
+	
+	Display::Display() {
+		buffer.clear();
+	}
+	Display::~Display() {
+		buffer.clear();
+	}
 	void Display::refresh() {
 		for (const auto& [position, bufferdata] : buffer) {
 			if (!bufferdata.second) continue; // if theres no changes, then continue
-			
+			Basic::printText(position, bufferdata.first);
 		}
 	}
 	void Display::set(COORD position, const display_t& data) {
-//		buffer[position] = data;
+		if (buffer[position].first == data) return; // if its the same, bypass
+		buffer[position] = std::make_pair(data, true);
 	}
-	display_t Display::get(COORD position) {
-//		return buffer[position];
+	display_t Display::get(COORD position) const {
+		return buffer.at(position).first; // cannot use [] to visit because of "const"
 	}
 
 }
