@@ -1,8 +1,11 @@
 #ifndef MenuKbdHPP
 #define MenuKbdHPP
 
-#include <string>
-#include <minwindef.h>
+//#include <string>
+//#include <vector>
+//#include <tuple>
+#include <bits/stdc++.h>
+#include <windows.h>
 
 namespace MenuKbd {
 
@@ -30,11 +33,20 @@ namespace MenuKbd {
 		
 		void setForegroundColor(WORD col);
 		void setBackgroundColor(WORD col);
-		WORD getForegroundColor();
-		WORD getBackgroundColor();
-		WORD getMixedColor();
+		WORD getForegroundColor() const;
+		WORD getBackgroundColor() const;
+		WORD getMixedColor() const;
 	};
 
+	using display_t = std::tuple<std::string, ConsoleColor>;
+	class Basic {
+	public:
+		static bool getCursorPosition(COORD &cursorPosition);
+		static bool setCursorPosition(COORD cursorPosition = {0, 0});
+		static bool setConsoleColor(const ConsoleColor& color);
+		static bool printText(COORD position, const display_t& data);
+	};
+	
 	class Text {
 	protected:
 		std::string name, text; // name: representation in code, text: charactors displayed
@@ -47,10 +59,10 @@ namespace MenuKbd {
 		void setText();
 		void setLenX();
 		void setLenY();
-		std::string getName();
-		std::string getText();
-		std::size_t getLenX();
-		std::size_t getLenY();
+		std::string getName() const;
+		std::string getText() const;
+		std::size_t getLenX() const;
+		std::size_t getLenY() const;
 		
 		
 	};
@@ -67,6 +79,15 @@ namespace MenuKbd {
 
 	};
 
+	class Display {
+		std::map<COORD, std::pair<display_t, bool> > buffer;
+	public:
+		Display(); ~Display();
+		
+		void refresh();
+		void set(COORD position, const display_t& data);
+		display_t get(COORD position) const;
+	};
 
 	Text::Text() {
 		name.clear(), text.clear();
@@ -75,6 +96,50 @@ namespace MenuKbd {
 	Text::~Text() {
 		name.clear(), text.clear();
 		LenX = LenY = 0;
+	}
+	
+	Display::Display() {
+		buffer.clear();
+	}
+	Display::~Display() {
+		buffer.clear();
+	}
+	
+	bool Basic::getCursorPosition(COORD &cursorPosition) {
+		bool ret = false;
+		CONSOLE_SCREEN_BUFFER_INFO temp;
+		ret |= GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &temp);
+		cursorPosition = temp.dwCursorPosition;
+		return ret;
+	}
+	bool Basic::setCursorPosition(COORD cursorPosition) {
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		return SetConsoleCursorPosition(hConsole, cursorPosition);
+	}
+	bool Basic::setConsoleColor(const ConsoleColor& color) {
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		return SetConsoleTextAttribute(hConsole, color.getMixedColor());
+	}
+	bool Basic::printText(COORD position, const display_t& data) {
+		const auto& [text, color] = data;
+		COORD position_now;
+		getCursorPosition(position_now);
+		setCursorPosition(position);
+		std::cout << text;
+		setCursorPosition(position_now);
+	}
+	
+	void Display::refresh() {
+		for (const auto& [position, bufferdata] : buffer) {
+			if (!bufferdata.second) continue; // if theres no changes, then continue
+			
+		}
+	}
+	void Display::set(COORD position, const display_t& data) {
+//		buffer[position] = data;
+	}
+	display_t Display::get(COORD position) {
+//		return buffer[position];
 	}
 
 }
