@@ -160,11 +160,11 @@ namespace MenuKbd {
 	bool Basic::printText(COORD position, const display_t& data) {
 		bool ret = false;
 		const auto& [text, color] = data;
-		COORD position_now; ConsoleColor color_now;
-//		ret |= getCursorPosition(position_now) 	|| getConsoleColor(color_now);
-		ret |= setCursorPosition(position)		|| setConsoleColor(color);
+		COORD curPosition; ConsoleColor curColor;
+		ret |= getCursorPosition(curPosition) 	| getConsoleColor(curColor);
+		ret |= setCursorPosition(position)		| setConsoleColor(color);
 		std::cout << text;
-//		ret |= setCursorPosition(position_now)	|| setConsoleColor(color_now);
+		ret |= setCursorPosition(curPosition)	| setConsoleColor(curColor);
 		return ret;
 	}
 	
