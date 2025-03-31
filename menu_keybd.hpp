@@ -66,15 +66,15 @@ namespace MenuKbd {
 	class Text {
 	protected:
 		std::string name, text; // name: representation in code, text: charactors displayed
-		std::size_t LenX, LenY; // limited length in x & y position, value "0" means "auto decide"
+		COORD limit; // limited length in x & y position, value "0" means "auto decide"
 		ConsoleColor defaultColor; // public ??
 	public:
 		Text(); ~Text();
 
-		void setName();
-		void setText();
-		void setLenX();
-		void setLenY();
+		void setName(const std::string& newName);
+		void setText(const std::string& newText);
+		void setLimitX(SHORT limitX);
+		void setLimitY(SHORT limitY);
 		std::string getName() const;
 		std::string getText() const;
 		std::size_t getLenX() const;
@@ -171,11 +171,11 @@ namespace MenuKbd {
 // Text
 	Text::Text() {
 		name.clear(), text.clear();
-		LenX = LenY = 0;
+		limit = {0, 0};
 	}
 	Text::~Text() {
 		name.clear(), text.clear();
-		LenX = LenY = 0;
+		limit = {0, 0};
 	}
 	
 // Display

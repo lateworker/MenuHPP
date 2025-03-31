@@ -6,11 +6,7 @@ using namespace std;
 using namespace MenuKbd;
 
 int main() {
-	ConsoleColor col;
-	col.setForegroundColor(ColorCyan);
-	Display scr;
-	scr.set({2, 5}, display_t{"a", col});
-	scr.refresh();
-	system("pause > nul");
+	string s = "你好a";
+	for (char c : s) cout << int(c) << "\n";
 	return 0;
 }
