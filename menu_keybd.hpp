@@ -21,27 +21,28 @@ std::ostream &operator << (std::ostream &pout, const COORD x) { pout << x.X << '
 
 namespace MenuKbd {
 
-#define CONSOLE_BLACK			0
-#define CONSOLE_BLUE			1
-#define CONSOLE_GREEN			2
-#define CONSOLE_CYAN			3
-#define CONSOLE_RED				4
-#define CONSOLE_PURPLE			5
-#define CONSOLE_YELLOW			6
-#define CONSOLE_WHITE			7
-#define CONSOLE_BRIGHTBLACK 	8
-#define CONSOLE_BRIGHTBLUE 		9
-#define CONSOLE_BRIGHTGREEN 	10
-#define CONSOLE_BRIGHTCYAN 		11
-#define CONSOLE_BRIGHTRED 		12
-#define CONSOLE_BRIGHTPURPLE 	13
-#define CONSOLE_BRIGHTYELLOW 	14
-#define CONSOLE_BRIGHTWHITE 	15
+#define ColorBlack				0
+#define ColorBlue				1
+#define ColorGreen				2
+#define ColorCyan				3
+#define ColorRed				4
+#define ColorPurple				5
+#define ColorYellow				6
+#define ColorWhite				7
+#define ColorBrightBlack		8
+#define ColorBrightBlue			9
+#define ColorBrightGreen		10
+#define ColorBrightCyan			11
+#define ColorBrightRed			12
+#define ColorBrightPurple	 	13
+#define ColorBrightYellow	 	14
+#define ColorBrightWhite		15
 	
 	class ConsoleColor {
 		WORD color;
 	public:
 		ConsoleColor(); ~ConsoleColor();
+		ConsoleColor(WORD mixedColor);
 		
 		void setForegroundColor(WORD col);
 		void setBackgroundColor(WORD col);
@@ -51,12 +52,13 @@ namespace MenuKbd {
 		
 		bool operator == (const ConsoleColor& b) const;
 	};
-
+	
 	using display_t = std::tuple<std::string, ConsoleColor>;
 	class Basic {
 	public:
 		static bool getCursorPosition(COORD &cursorPosition);
 		static bool setCursorPosition(COORD cursorPosition = {0, 0});
+		static bool getConsoleColor(ConsoleColor& color);
 		static bool setConsoleColor(const ConsoleColor& color);
 		static bool printText(COORD position, const display_t& data);
 	};
@@ -103,12 +105,27 @@ namespace MenuKbd {
 		display_t get(COORD position) const;
 	};
 	
-	
+// ConsoleColor
 	ConsoleColor::ConsoleColor() {
-		color = CONSOLE_WHITE;
+		color = ColorWhite;
 	} 
 	ConsoleColor::~ConsoleColor() {
 		color = 0;
+	}
+	ConsoleColor::ConsoleColor(WORD mixedColor) {
+		color = mixedColor;
+	}
+	void ConsoleColor::setForegroundColor(WORD col) {
+		color = getBackgroundColor() << 4 | col;
+	}
+	void ConsoleColor::setBackgroundColor(WORD col) {
+		color = col << 4 | getForegroundColor();
+	}
+	WORD ConsoleColor::getForegroundColor() const {
+		return color & 0b1111;
+	}
+	WORD ConsoleColor::getBackgroundColor() const {
+		return color >> 4;
 	}
 	WORD ConsoleColor::getMixedColor() const {
 		return color;
@@ -117,16 +134,24 @@ namespace MenuKbd {
 		return color == b.color;
 	}
 	
+// Basic
 	bool Basic::getCursorPosition(COORD &cursorPosition) {
-		bool ret = false;
-		CONSOLE_SCREEN_BUFFER_INFO temp;
-		ret |= GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &temp);
-		cursorPosition = temp.dwCursorPosition;
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); bool ret = false;
+		CONSOLE_SCREEN_BUFFER_INFO info;
+		ret |= GetConsoleScreenBufferInfo(hConsole, &info);
+		cursorPosition = info.dwCursorPosition;
 		return ret;
 	}
 	bool Basic::setCursorPosition(COORD cursorPosition) {
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		return SetConsoleCursorPosition(hConsole, cursorPosition);
+	}
+	bool Basic::getConsoleColor(ConsoleColor& color) {
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); bool ret = false;
+		CONSOLE_SCREEN_BUFFER_INFO info;
+		ret |= GetConsoleScreenBufferInfo(hConsole, &info);
+		color = ConsoleColor(info.wAttributes);
+		return ret;
 	}
 	bool Basic::setConsoleColor(const ConsoleColor& color) {
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -135,14 +160,15 @@ namespace MenuKbd {
 	bool Basic::printText(COORD position, const display_t& data) {
 		bool ret = false;
 		const auto& [text, color] = data;
-		COORD position_now;
-		ret |= getCursorPosition(position_now);
-		ret |= setCursorPosition(position);
+		COORD position_now; ConsoleColor color_now;
+//		ret |= getCursorPosition(position_now) 	|| getConsoleColor(color_now);
+		ret |= setCursorPosition(position)		|| setConsoleColor(color);
 		std::cout << text;
-		ret |= setCursorPosition(position_now);
+//		ret |= setCursorPosition(position_now)	|| setConsoleColor(color_now);
 		return ret;
 	}
 	
+// Text
 	Text::Text() {
 		name.clear(), text.clear();
 		LenX = LenY = 0;
@@ -152,6 +178,7 @@ namespace MenuKbd {
 		LenX = LenY = 0;
 	}
 	
+// Display
 	Display::Display() {
 		buffer.clear();
 	}

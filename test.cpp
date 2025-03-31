@@ -7,10 +7,11 @@ using namespace MenuKbd;
 
 int main() {
 	ConsoleColor col;
-	
-	Display scr;
-	scr.set({2, 5}, display_t{"a", col});
-	scr.refresh();
-	system("pause > nul");
+	col.setForegroundColor(ColorCyan);
+	Basic::printText({0, 0}, display_t{"Test", col});
+//	Display scr;
+//	scr.set({2, 5}, display_t{"a", col});
+//	scr.refresh();
+//	system("pause > nul");
 	return 0;
 }
