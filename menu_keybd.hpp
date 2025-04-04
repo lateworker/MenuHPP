@@ -61,6 +61,8 @@ namespace MenuKbd {
 		static bool getConsoleColor(ConsoleColor& color);
 		static bool setConsoleColor(const ConsoleColor& color);
 		static bool printText(COORD position, const display_t& data);
+		static std::string splitOneCharacter(std::string& text);
+		static size_t countCharacters(const std::string& text);
 	};
 	
 	class Text {
@@ -73,12 +75,12 @@ namespace MenuKbd {
 
 		void setName(const std::string& newName);
 		void setText(const std::string& newText);
-		void setLimitX(SHORT limitX);
+		void setLimitX(SHORT limitX); // X limits the Column, Y limits the Row
 		void setLimitY(SHORT limitY);
 		std::string getName() const;
 		std::string getText() const;
-		std::size_t getLenX() const;
-		std::size_t getLenY() const;
+		SHORT getLimitX() const;
+		SHORT getLimitY() const;
 		
 		
 	};
@@ -167,6 +169,19 @@ namespace MenuKbd {
 		ret |= setCursorPosition(curPosition)	| setConsoleColor(curColor);
 		return ret;
 	}
+	std::string Basic::splitOneCharacter(std::string& text) {
+		if (text.empty()) return "";
+		std::string res;
+		res.push_back(text.front()), text = text.substr(1);
+		if (res.back() >= 0) return res;
+		res.push_back(text.front()), text = text.substr(1);
+		return res;
+	}
+	size_t Basic::countCharacters(const std::string& text) {
+		size_t cnt = 0;
+		for (std::string s = text; !s.empty(); splitOneCharacter(s)) ++cnt;
+		return cnt;
+	}
 	
 // Text
 	Text::Text() {
@@ -176,6 +191,31 @@ namespace MenuKbd {
 	Text::~Text() {
 		name.clear(), text.clear();
 		limit = {0, 0};
+	}
+	void Text::setName(const std::string& newName) {
+		name = newName;
+	}
+	void Text::setText(const std::string& newText) {
+		text = newText;
+	}
+	void Text::setLimitX(SHORT limitX) {
+		limit.X = limitX;
+	}
+	void Text::setLimitY(SHORT limitY) {
+		limit.Y = limitY;
+	}
+	std::string Text::getName() const {
+		return name;
+	}
+	std::string Text::getText() const {
+		return text;
+	}
+	SHORT Text::getLimitX() const {
+		if (limit.X) return limit.X;
+	}
+	SHORT Text::getLimitY() const {
+		if (limit.Y) return limit.Y;
+		return Basic::countCharacters(text);
 	}
 	
 // Display

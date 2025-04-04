@@ -6,7 +6,8 @@ using namespace std;
 using namespace MenuKbd;
 
 int main() {
-	string s = "你好a";
-	for (char c : s) cout << int(c) << "\n";
+	Text a;
+	a.setText("你好a");
+	cout << a.getLimitX();
 	return 0;
 }
